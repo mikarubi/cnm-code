@@ -23,7 +23,7 @@ void theloop(
         double *const HistoryMeanDelt,  double *const HistoryThrshold)
 {
     int t, h, i, j, e1, e2, a, b, c, d, n_vald_node, n_vald_modu, p = binary_cn + 1;
-    double  DeltS[p][2*n], DeltM[p][m*m], DeltL[p][2*n], ScleS[p], ScleM[p], ScleL[p],
+    double  DeltS[p][2*n], DeltL[p][m*m], DeltR[p][2*n], ScleS[p], ScleL[p], ScleR[p],
             wcd_minus_wab_nrms[p], wcd_minus_wab_nrmm[p],
             rcd_minus_rab_nrml[p], rab_minus_rcd_nrml[p],
             wab, wcd, bab, bcd, summ, delt0, delt1, delti;
@@ -39,11 +39,11 @@ void theloop(
     delt0 = 0;
     for(h=0; h<p; h++){
         ScleS[h] = 0;
-        ScleM[h] = 0;
         ScleL[h] = 0;
+        ScleR[h] = 0;
         for(i=0; i<2*n; i++) DeltS[h][i] = 0;
-        for(i=0; i<m*m; i++) DeltM[h][i] = 0;
-        for(i=0; i<2*n; i++) DeltL[h][i] = 0;
+        for(i=0; i<m*m; i++) DeltL[h][i] = 0;
+        for(i=0; i<2*n; i++) DeltR[h][i] = 0;
     }
     
     /* binarize one of the matrices */
@@ -98,49 +98,49 @@ void theloop(
         }
         
         if(objL){
-            /* get ScleM, which depends on n_vald_modu */
+            /* get ScleL, which depends on n_vald_modu */
             for(i=0; i<n; i++)
                 for(j=0; j<n; j++)
                     if((M[i]>=0) && (M[j]>=0) && IdxM[M[i] + M[j]*m])
-                        ScleM[h] += W[h][i + j*n]/n_vald_modu;
+                        ScleL[h] += W[h][i + j*n]/n_vald_modu;
             
-            /* get DeltM, which depends on ScleM */
+            /* get DeltL, which depends on ScleL */
             for(i=0; i<n; i++)
                 for(j=0; j<n; j++)
                     if((M[i]>=0) && (M[j]>=0) && IdxM[M[i] + M[j]*m])
-                        DeltM[h][M[i] + M[j]*m] += (W0[h][i + j*n] - W[h][i + j*n])/ScleM[h];
+                        DeltL[h][M[i] + M[j]*m] += (W0[h][i + j*n] - W[h][i + j*n])/ScleL[h];
             
             /* cumulate delt0 */
             for(delti=0, i=0; i<m*m; i++)
                 if(IdxM[i])
-                    delti += fabs(DeltM[h][i])/n_vald_modu;
+                    delti += fabs(DeltL[h][i])/n_vald_modu;
             delt0 += delti*delti;
         }
         
         if(objR){
-            /* get ScleL, which depends on n_vald_node */
+            /* get ScleR, which depends on n_vald_node */
             for(i=0; i<n; i++){
                 if(IdxN[  i])
                     for(j=0; j<n; j++)
-                        ScleL[h] += B[h][i + j*n]*D[i + j*n]/n_vald_node;
+                        ScleR[h] += B[h][i + j*n]*D[i + j*n]/n_vald_node;
                 if(IdxN[n+i])
                     for(j=0; j<n; j++)
-                        ScleL[h] += B[h][j + i*n]*D[j + i*n]/n_vald_node;
+                        ScleR[h] += B[h][j + i*n]*D[j + i*n]/n_vald_node;
             }
             
             for(i=0; i<n; i++){
                 if(IdxN[  i])
                     for(j=0; j<n; j++)
-                        DeltL[h][  i] += (B0[h][i + j*n] - B[h][i + j*n])*D[i + j*n]/ScleL[h];
+                        DeltR[h][  i] += (B0[h][i + j*n] - B[h][i + j*n])*D[i + j*n]/ScleR[h];
                 if(IdxN[n+i])
                     for(j=0; j<n; j++)
-                        DeltL[h][n+i] += (B0[h][j + i*n] - B[h][j + i*n])*D[j + i*n]/ScleL[h];
+                        DeltR[h][n+i] += (B0[h][j + i*n] - B[h][j + i*n])*D[j + i*n]/ScleR[h];
             }
             
             /* cumulate delt0 */
             for(delti=0, i=0; i<2*n; i++)
                 if(IdxN[i])
-                    delti += fabs(DeltL[h][i])/n_vald_node;
+                    delti += fabs(DeltR[h][i])/n_vald_node;
             delt0 += delti*delti;
         }
     }
@@ -211,8 +211,8 @@ void theloop(
             }
             
             if(objL){
-                wcd_minus_wab_nrmm[h]     = (W0[h][c + d*n] - W0[h][a + b*n])/ScleM[h];
-                wc1d1_minus_wa1b1_nrmm[h] = (W0[h][c1+d1*n] - W0[h][a1+b1*n])/ScleM[h];
+                wcd_minus_wab_nrmm[h]     = (W0[h][c + d*n] - W0[h][a + b*n])/ScleL[h];
+                wc1d1_minus_wa1b1_nrmm[h] = (W0[h][c1+d1*n] - W0[h][a1+b1*n])/ScleL[h];
                 
                 for(delti=0, i=0; i<m*m; i++){
                     if(IdxM[i]){
@@ -226,17 +226,17 @@ void theloop(
                         if((i==M[c1]+M[d1]*m) && (M[c1]>=0) && (M[d1]>=0))
                             summ -= wc1d1_minus_wa1b1_nrmm[h];
                         
-                        delti += fabs(DeltM[h][i]+summ)/n_vald_modu;
+                        delti += fabs(DeltL[h][i]+summ)/n_vald_modu;
                     }
                 }
                 delt1 += delti*delti;
             }
             
             if(objR){
-                rcd_minus_rab_nrml[h]     = (B0[h][c + d*n] - B0[h][a + b*n])*D[a + b*n]/ScleL[h];
-                rab_minus_rcd_nrml[h]     = (B0[h][a + b*n] - B0[h][c + d*n])*D[c + d*n]/ScleL[h];
-                rc1d1_minus_ra1b1_nrml[h] = (B0[h][c1+d1*n] - B0[h][a1+b1*n])*D[a1+b1*n]/ScleL[h];
-                ra1b1_minus_rc1d1_nrml[h] = (B0[h][a1+b1*n] - B0[h][c1+d1*n])*D[c1+d1*n]/ScleL[h];
+                rcd_minus_rab_nrml[h]     = (B0[h][c + d*n] - B0[h][a + b*n])*D[a + b*n]/ScleR[h];
+                rab_minus_rcd_nrml[h]     = (B0[h][a + b*n] - B0[h][c + d*n])*D[c + d*n]/ScleR[h];
+                rc1d1_minus_ra1b1_nrml[h] = (B0[h][c1+d1*n] - B0[h][a1+b1*n])*D[a1+b1*n]/ScleR[h];
+                ra1b1_minus_rc1d1_nrml[h] = (B0[h][a1+b1*n] - B0[h][c1+d1*n])*D[c1+d1*n]/ScleR[h];
                 
                 for(delti=0, i=0; i<2*n; i++){
                     if(IdxN[i]){
@@ -250,7 +250,7 @@ void theloop(
                         if(i==c1 || i==n+d1)
                             summ += ra1b1_minus_rc1d1_nrml[h];
                         
-                        delti += fabs(DeltL[h][i]+summ)/n_vald_node;
+                        delti += fabs(DeltR[h][i]+summ)/n_vald_node;
                     }
                 }
                 delt1 += delti*delti;
@@ -291,23 +291,23 @@ void theloop(
                 }
                 if(objL){
                     if((M[ a]>=0) && (M[ b]>=0))
-                        DeltM[h][M[ a]+M[ b]*m] += wcd_minus_wab_nrmm[h];
+                        DeltL[h][M[ a]+M[ b]*m] += wcd_minus_wab_nrmm[h];
                     if((M[ c]>=0) && (M[ d]>=0))
-                        DeltM[h][M[ c]+M[ d]*m] -= wcd_minus_wab_nrmm[h];
+                        DeltL[h][M[ c]+M[ d]*m] -= wcd_minus_wab_nrmm[h];
                     if((M[a1]>=0) && (M[b1]>=0))
-                        DeltM[h][M[a1]+M[b1]*m] += wc1d1_minus_wa1b1_nrmm[h];
+                        DeltL[h][M[a1]+M[b1]*m] += wc1d1_minus_wa1b1_nrmm[h];
                     if((M[c1]>=0) && (M[d1]>=0))
-                        DeltM[h][M[c1]+M[d1]*m] -= wc1d1_minus_wa1b1_nrmm[h];
+                        DeltL[h][M[c1]+M[d1]*m] -= wc1d1_minus_wa1b1_nrmm[h];
                 }
                 if(objR){
-                    DeltL[h][   a] += rcd_minus_rab_nrml[h];
-                    DeltL[h][n+ b] += rcd_minus_rab_nrml[h];
-                    DeltL[h][   c] += rab_minus_rcd_nrml[h];
-                    DeltL[h][n+ d] += rab_minus_rcd_nrml[h];
-                    DeltL[h][  a1] += rc1d1_minus_ra1b1_nrml[h];
-                    DeltL[h][n+b1] += rc1d1_minus_ra1b1_nrml[h];
-                    DeltL[h][  c1] += ra1b1_minus_rc1d1_nrml[h];
-                    DeltL[h][n+d1] += ra1b1_minus_rc1d1_nrml[h];
+                    DeltR[h][   a] += rcd_minus_rab_nrml[h];
+                    DeltR[h][n+ b] += rcd_minus_rab_nrml[h];
+                    DeltR[h][   c] += rab_minus_rcd_nrml[h];
+                    DeltR[h][n+ d] += rab_minus_rcd_nrml[h];
+                    DeltR[h][  a1] += rc1d1_minus_ra1b1_nrml[h];
+                    DeltR[h][n+b1] += rc1d1_minus_ra1b1_nrml[h];
+                    DeltR[h][  c1] += ra1b1_minus_rc1d1_nrml[h];
+                    DeltR[h][n+d1] += ra1b1_minus_rc1d1_nrml[h];
                 }
             }
         }
