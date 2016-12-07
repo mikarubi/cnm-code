@@ -1,5 +1,92 @@
 function [W0, B0, HistoryThreshold, HistoryMeanDelt] = ...
-    simann_constraint_model(W0, B0, W, B, D, M, Nl, Nr, objS, objL, objR, IdxN, IdxM, opts)
+    simann_constraint_model(W, B, D, M, Nl, Nr, objS, objL, objR, IdxN, IdxM, opts)
+%SIMANN_CONSTRAINT_MODEL     Unbiased sampling of networks with hard constraints
+%
+%   [W0, B0, HistoryThreshold, HistoryMeanDelt] = simann_constraint_model(  ...
+%                           W, B, D, M, Nl, Nr, objS, objL, objR, IdxN, IdxM, opts)
+%
+%   This function randomizes the input network via minimization with
+%   simulated weighted) of weighted (+/- binary) node-strength, wiring-cost
+%   and module-weight constraints).
+%
+%   Inputs (for a network with n nodes, m modules and c constraints):
+%
+%       samp,   Number of networks to sample.
+%
+%       W,      (length n) square directed and weighted connectivity
+%               matrix. All weights must be nonnegative real numbers.
+%
+%       B,      (length n) square directed and weighted bandwidth matrix.
+%               Bandwidth represents an estimate for the cross-section of
+%               the white-matter pathway in computations of wiring costs.
+%               In the absence of such estimates, the weights matrix W is
+%               typically used as a substitute.
+%
+%       D,      (length n) square directed and weighted distance matrix.
+%               This matrix represents an estimate for the distance between
+%               all pairs of nodes.
+%
+%       M,      (length n) module affiliation vector. This vector is often
+%               obtained as the output of a community detection algorithm.
+%               The vector must contain nonnegative integers, with zeros
+%               specifying nodes which are not part of any community. This
+%               input may be left empty if there are no module constraints.
+%
+%       IdxN,   (length n) out-strength constraint logical vector. This
+%               vector specifies out-strength constraints for each node.
+%               Alternatively, it is possible to specify 1 to constrain all
+%               out-strengths or 0 for no constraints. Empty or no input
+%               results in default behavour (no constraints).
+%
+%       IdxM,	(length m) module-weight constraint logical matrix. This
+%               matrix specifies module-weight constraints for all pairs of
+%               modules. Alternatively, it is possible to specify
+%               2 to constrain all inter-module and intra-module weights,
+%               1 to constrain all intra-module weights, or 0  for no
+%               constraints. Empty or no input results in default behavour
+%               (no constraints).
+%
+%       opts,   custom simulated annealing options
+%
+%
+%   Outputs:
+%       W0,     randomized weights matrix.
+%       B0,     randomized bandwidth matrix.
+%
+%
+%   Notes:      The mex file needs to be compiled once before execution:
+%                   mex loop_sa.c rand_mt.c
+%
+%   Examples:
+%               % get community structure of a weighted network W
+%               M = community_louvain(W, 2);
+%
+%               % specify node and module constraints
+%               n = length(W);                          % number of nodes
+%               m = max(M);                             % number of modules
+%               Nl = false(n, 1); Nl(1:n/2) = 1;      	% nodes on the left hemisphere
+%               Nr = false(n, 1); Nr(1:n/2) = 1;        % nodes on the right hemisphere
+%               objS = 1;                               % constrain strengths
+%               objL = 1;                               % constrain intra-module weights
+%               objR = 1;                               % constrain wiring costs
+%               IdxN = true(n, 1);                      % in-strength constraints
+%               IdxM = eye(m);                          % module-weight constraints
+%
+%               % sample networks with the above constraints
+%               [W0, B0, HistoryThreshold, HistoryMeanDelt] = ...
+%                   simann_constraint_model(  ...
+%                           W, B, D, M, Nl, Nr, objS, objL, objR, IdxN, IdxM)
+%
+%
+%   References: Schreiber (1998) Phys Rev Lett 80 2105
+%               Rubinov (2016) Nat Commun 7:13812
+%
+%
+%   2016, Mika Rubinov, Janelia HHMI
+
+%   Modification History
+%   Dec 2016: Original.
+
 
 if ~exist('opts', 'var')
     thr0      = 1;
@@ -20,17 +107,17 @@ else
 end
 
 B(  ~W) = 0;
-B0(~W0) = 0;
 
 HistoryMeanDelt  = nan(1,ceil(time_totl/time_decy));
 HistoryThreshold = nan(1,ceil(time_totl/time_decy));
 
 n = length(W);
-W0(1:n+1:end) = 0;
-B0(1:n+1:end) = 0;
 W( 1:n+1:end) = 0;
 B( 1:n+1:end) = 0;
 D( 1:n+1:end) = 0;
+W0 = 1 * W + 0;
+B0 = 1 * B + 0;
+
 
 M = M(:);
 m = max(M);
@@ -47,9 +134,6 @@ n_asym = numel(INa);
 n_edge = numel(I);
 n_obj  = nnz(isfinite(nonzeros([objS objL objR])));
 
-if ~isequal(sort(W(:)),sort(W0(:)))
-    error('Inequality of weights.')
-end
 if ~exist('IdxN', 'var')
     if objS || objR
         IdxN = true(1, 2*n);

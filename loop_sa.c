@@ -327,12 +327,12 @@ void theloop(
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
     mxArray
-            *mxW0                	=  mexGetVariable("caller","W0"),
-            *mxB0                 	=  mexGetVariable("caller","B0"),
+            *mxW0                	=  mexGetVariable("caller","W"),
+            *mxB0                 	=  mexGetVariable("caller","B"),
             *mxW                    =  mexGetVariable("caller","W"),
             *mxB                    =  mexGetVariable("caller","B"),
-            *mxW0bin             	=  mexGetVariable("caller","W0"),
-            *mxB0bin              	=  mexGetVariable("caller","B0"),
+            *mxW0bin             	=  mexGetVariable("caller","W"),
+            *mxB0bin              	=  mexGetVariable("caller","B"),
             *mxWbin                 =  mexGetVariable("caller","W"),
             *mxBbin                 =  mexGetVariable("caller","B"),
             *mxHistoryMeanDelt      =  mexGetVariable("caller","HistoryMeanDelt"),
@@ -375,6 +375,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             time_decy             	= *(int32_T *)mxGetData(mexGetVariablePtr("caller","time_decy")),
             rng_seed                = *(int32_T *)mxGetData(mexGetVariablePtr("caller","rng_seed"));
 
+    if(nrhs || nlhs)
+        mexErrMsgTxt("There are no inputs or outputs. Do not call this function directly.");
+    
     theloop(W, B, D, M, objS, objL, objR, Ns, Na, Ms, INa, n_asym,
             I, J, IdxN, IdxM, binary_cn, temp, temp_decy, thr1, n, n_edge, m, n_obj,
             time_totl, time_decy, rng_seed, W0, B0, HistoryMeanDelt, HistoryThrshold);
