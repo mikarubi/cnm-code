@@ -1,5 +1,5 @@
 function [W0, B0, HistoryThreshold, HistoryMeanDelt] = ...
-    simann_constraint_model(W0, B0, W, B, D, M, H, Nl, Nr, objS, objL, objR, IdxN, IdxM, opts)
+    simann_constraint_model(W0, B0, W, B, D, M, Nl, Nr, objS, objL, objR, IdxN, IdxM, opts)
 
 if ~exist('opts', 'var')
     thr0      = 1;
@@ -50,14 +50,31 @@ n_obj  = nnz(isfinite(nonzeros([objS objL objR])));
 if ~isequal(sort(W(:)),sort(W0(:)))
     error('Inequality of weights.')
 end
+if ~exist('IdxN', 'var')
+    if objS || objR
+        IdxN = true(1, 2*n);
+    else
+        IdxN = false(1, 2*n);
+    end
+end
+if ~exist('IdxM', 'var')
+    switch objL
+        case 2;
+            IdxM = true(m);
+        case 1;
+            IdxM = eye(m);
+        otherwise;
+            IdxM = false(m);
+    end
+end
 
 IdxN      = int32(IdxN);
 IdxM      = int32(IdxM);
 M_c       = int32(M-1);                     % convert to C indexing
 binary_cn = int32(logical(binary_cn));
-objS     = int32(objS);
-objL     = int32(objL);
-objR     = int32(objR);
+objS      = int32(objS);
+objL      = int32(objL);
+objR      = int32(objR);
 n_obj     = int32(n_obj);
 Ns        = int32(Ns);
 Na        = int32(Na);
