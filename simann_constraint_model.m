@@ -61,9 +61,13 @@ function [W0, B0, HistoryThreshold, HistoryMeanDelt] = ...
 %
 %   Outputs:
 %
-%       W0,     randomized weights matrix.
+%       W0,                	randomized weights matrix.
 %
-%       B0,     randomized bandwidth matrix.
+%       B0,               	randomized bandwidth matrix.
+%
+%       HistoryThreshold, 	simulated-annealing threshold history.
+%
+%       HistoryMeanDelt,   	simulated-annealing constraint-error history.
 %
 %
 %   Notes:
@@ -111,12 +115,12 @@ function [W0, B0, HistoryThreshold, HistoryMeanDelt] = ...
 
 
 if ~exist('opts', 'var')
-    thr0      = 1;                	% initial cutoff error
+    thr0      = 1;                	% initial constraint-error threshold
     thr_decy  = 1-(1e-3);          	% temperature decay rate
-    thr1      = 0.005;             	% target cutoff error
+    thr1      = 0.005;             	% target constraint-error threshold
     time_totl = 1e+9;              	% total number of iterations
     time_decy = 1e+4;              	% number of iterations at each temperature
-    rng_seed  = rand;              	% initial seed
+    rng_seed  = rand;              	% random seed
     binary_cn = 1;                 	% binary constraints (on or off)
 else
     thr0        = opts.thr0;
