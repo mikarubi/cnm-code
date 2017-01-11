@@ -38,27 +38,25 @@ function [W0, B0, HistoryThreshold, HistoryMeanDelt] = ...
 %       Nr,     (length n) logical vector. This vector denotes regions in
 %               the right hemisphere with 1 (and with 0 otherwise).
 %
-%       objS,   scalar flag for constraining node strength sequence (0 or 1).
+%       objS,   flag for constraining node strengths (0 or 1).
 %
-%       objL,   scalar flag for constraining all intra-module weights (0 or 1).
+%       objL,   flag for constraining intra-module weights (0 or 1).
 %
-%       objR,   scalar flag for constraining node wiring-cost sequence (0 or 1).
+%       objR,   flag for constraining wiring-costs (0 or 1).
 %
-%       IdxN,   (length n) out-strength constraint logical vector. This
-%               vector specifies out-strength constraints for each node.
-%               Alternatively, it is possible to specify 1 to constrain all
-%               out-strengths or 0 for no constraints. Empty or no input
-%               results in default behavour (no constraints).
+%       IdxN,   (length n) logical vector of node indices to constrain.
+%               Alternatively, specify 1 to constrain all nodes or 0 to
+%               constrain no nodes. Empty or absent input results in
+%               default behavour (no constraints).
 %
-%       IdxM,	(length m) module-weight constraint logical matrix. This
-%               matrix specifies module-weight constraints for all pairs of
-%               modules. Alternatively, it is possible to specify
-%               2 to constrain all inter-module and intra-module weights,
-%               1 to constrain all intra-module weights, or 0  for no
-%               constraints. Empty or no input results in default behavour
-%               (no constraints).
+%       IdxM,	(length m) logical matrix of module indices to constrain.
+%               Alternatively, specify 2 to constrain all inter-module and
+%               intra-module weights, 1 to constrain all intra-module
+%               weights, or 0 for no constraints. Empty or no input results
+%               in default behavour (no constraints).
 %
-%       opts,   custom simulated annealing options (optional argument).
+%       opts,   custom simulated annealing options 
+%               (this argument may be omitted, see code for details).
 %
 %
 %   Outputs:
@@ -68,17 +66,17 @@ function [W0, B0, HistoryThreshold, HistoryMeanDelt] = ...
 %       B0,     randomized bandwidth matrix.
 %
 %
-%   Notes:      
+%   Notes:
 %
 %   	The mex file needs to be compiled as: mex loop_sa.c rand_mt.c.
 %
-%       Region affiliations for the left and right hemispheres, Nl and Nr,
+%       Nl and Nr, region affiliations for the left and right hemispheres,
 %       are specified when one wishes to preserve hemispheric symmetry. One
 %       must specify the same number of regions on the left and right, and
 %       in the same order. For example, the regions in the matrix may be
 %       ordered as follows: L1, L2, ..., Lk, R1, R2, ..., Rk. Regions which
-%       which are not specified to be present in either the left or right
-%       hemispheres are not subject to hemispheric symmetry constraints.
+%       are not specified to be part of the left or right hemispheres are
+%       not subject to hemispheric symmetry constraints.
 %
 %
 %   Example:
@@ -93,8 +91,8 @@ function [W0, B0, HistoryThreshold, HistoryMeanDelt] = ...
 %               objS = 1;                               % constrain strengths
 %               objL = 1;                               % constrain intra-module weights
 %               objR = 1;                               % constrain wiring costs
-%               IdxN = true(n, 1);                      % in-strength constraints
-%               IdxM = eye(m);                          % module-weight constraints
+%               IdxN = true(n, 1);                      % constrain all nodes
+%               IdxM = eye(m);                          % constrain all intra-module weights
 %
 %               % sample networks with the above constraints
 %               [W0, B0, HistoryThreshold, HistoryMeanDelt] = ...
@@ -113,13 +111,13 @@ function [W0, B0, HistoryThreshold, HistoryMeanDelt] = ...
 
 
 if ~exist('opts', 'var')
-    thr0      = 1;
-    thr_decy  = 1-(1e-3);
-    thr1      = 0.005;
-    time_totl = 1e+9;
-    time_decy = 1e+4;
-    rng_seed  = rand;
-    binary_cn = 1;
+    thr0      = 1;                	% initial cutoff error
+    thr_decy  = 1-(1e-3);          	% temperature decay rate
+    thr1      = 0.005;             	% target cutoff error
+    time_totl = 1e+9;              	% total number of iterations
+    time_decy = 1e+4;              	% number of iterations at each temperature
+    rng_seed  = rand;              	% initial seed
+    binary_cn = 1;                 	% binary constraints (on or off)
 else
     thr0        = opts.thr0;
     thr_decy    = opts.thr_decy;
