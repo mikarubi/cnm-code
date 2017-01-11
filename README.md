@@ -1,7 +1,6 @@
 # cnm-code
 
-Graph sampling algorithms from the paper 'Constraints and spandrels of interareal connectomes'.
-Rubinov (2016) Nature Communications 7 13812, doi:10.1038/ncomms13812.
+Graph sampling algorithms from Rubinov (2016) 'Constraints and spandrels of interareal connectomes'. Nature Communications 7 13812. Please contact Mika Rubinov (rubinovm at janelia.hhmi.org) for additional help or comments.
 
 |                             | SIMANN_CONSTRAINT_MODEL: constrained randomization of empirical networks                                                                                  | MLEME_CONSTRAINT_MODEL: exact maximum-likelihood estimation of maximum-entropy/exponential random-graph models                                                                                      |
 |-----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
