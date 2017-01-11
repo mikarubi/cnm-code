@@ -18,7 +18,7 @@ function [W0, B0, HistoryThreshold, HistoryMeanDelt] = ...
 %
 %       B,      (length n) square directed and weighted bandwidth matrix.
 %               Bandwidth represents an estimate for the cross-section of
-%               the white-matter pathway in computations of wiring costs.
+%               the white-matter pathway in computations of wiring costs.yes,
 %               In the absence of such estimates, the weights matrix W is
 %               typically used as a substitute.
 %
@@ -31,6 +31,18 @@ function [W0, B0, HistoryThreshold, HistoryMeanDelt] = ...
 %               The vector must contain nonnegative integers, with zeros
 %               specifying nodes which are not part of any community. This
 %               input may be left empty if there are no module constraints.
+%
+%       Nl,     (length n) logical vector. This vector denotes regions in
+%               the left hemisphere with 1 (and with 0 otherwise).
+%
+%       Nr,     (length n) logical vector. This vector denotes regions in
+%               the right hemisphere with 1 (and with 0 otherwise).
+%
+%       objS,   scalar flag for constraining node strength sequence (0 or 1).
+%
+%       objL,   scalar flag for constraining all intra-module weights (0 or 1).
+%
+%       objR,   scalar flag for constraining node wiring-cost sequence (0 or 1).
 %
 %       IdxN,   (length n) out-strength constraint logical vector. This
 %               vector specifies out-strength constraints for each node.
@@ -46,18 +58,30 @@ function [W0, B0, HistoryThreshold, HistoryMeanDelt] = ...
 %               constraints. Empty or no input results in default behavour
 %               (no constraints).
 %
-%       opts,   custom simulated annealing options
+%       opts,   custom simulated annealing options (optional argument).
 %
 %
 %   Outputs:
+%
 %       W0,     randomized weights matrix.
+%
 %       B0,     randomized bandwidth matrix.
 %
 %
-%   Notes:      The mex file needs to be compiled once before execution:
-%                   mex loop_sa.c rand_mt.c
+%   Notes:      
 %
-%   Examples:
+%   	The mex file needs to be compiled as: mex loop_sa.c rand_mt.c.
+%
+%       Region affiliations for the left and right hemispheres, Nl and Nr,
+%       are specified when one wishes to preserve hemispheric symmetry. One
+%       must specify the same number of regions on the left and right, and
+%       in the same order. For example, the regions in the matrix may be
+%       ordered as follows: L1, L2, ..., Lk, R1, R2, ..., Rk. Regions which
+%       which are not specified to be present in either the left or right
+%       hemispheres are not subject to hemispheric symmetry constraints.
+%
+%
+%   Example:
 %               % get community structure of a weighted network W
 %               M = community_louvain(W, 2);
 %
@@ -143,11 +167,11 @@ if ~exist('IdxN', 'var')
 end
 if ~exist('IdxM', 'var')
     switch objL
-        case 2;
+        case 2
             IdxM = true(m);
-        case 1;
+        case 1
             IdxM = eye(m);
-        otherwise;
+        otherwise
             IdxM = false(m);
     end
 end
