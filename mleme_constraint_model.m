@@ -53,16 +53,23 @@ function [W0, E0, P0, Delt0] = mleme_constraint_model(samp, W, M, Lo, Li, Lm, op
 %
 %   Outputs:
 %       W0,     an ensemble of sampled networks with constraints.
+%
 %       E0,     expected weights matrix.
+%
 %       P0,     probability matrix.
+%
 %       Delt0,  algorithm convergence error.
 %
 %
-%   Algorithm and notes:
+%   Algorithm:
 %               Maximum-likelihood estimation of network probability
 %               distribution by numerical solution of systems of nonlinear
 %               equations, and sampling of individual networks directly
-%               from this distribution. Empirical connection weights are
+%               from this distribution.
+%
+%
+%   Notes:
+%               Empirical connection weights are
 %               not preserved. Constraint errors are guaranteed to vanish
 %               in the limit of the full network ensemble.
 %
@@ -117,25 +124,25 @@ if ~isequal(M, int64(M)) || min(M(:))<0
 end
 
 % process node constraints
-if ~exist('Lo','var') || isempty(Lo) || isequal(Lo,0);
+if ~exist('Lo','var') || isempty(Lo) || isequal(Lo,0)
     Lo = false(n, 1);
-elseif isequal(Lo, 1);
+elseif isequal(Lo, 1)
     Lo = true(n, 1);
 end
 if ~exist('Li','var')
     Li = Lo;
 elseif isempty(Li) || isequal(Li, 0)
     Li = false(n, 1);
-elseif isequal(Li, 1);
+elseif isequal(Li, 1)
     Li = true(n, 1);
 end
 
 % process module constraints
 if ~exist('Lm','var') || isempty(Lm) || isequal(Lm,0)
     Lm = false(m);
-elseif isequal(Lm, 2);
+elseif isequal(Lm, 2)
     Lm = true(m);
-elseif isequal(Lm, 1);
+elseif isequal(Lm, 1)
     Lm = diag(true(m, 1));
 end
 if any(~M)
@@ -190,7 +197,7 @@ end
 n = length(P0);
 
 CellW0 = cell(samp, 1);
-for i = 1:samp;
+for i = 1:samp
     W0 = zeros(n);
     L0 = ~eye(n);
     l0 = nnz(L0);
@@ -235,22 +242,22 @@ end
 
 function C = system_constraints(W, M, Lo, Li, Lm, uo, ui, um)
 
-if nargin == 0;
+if nargin == 0
     C = @block_density;
     return;
 end
 
-if uo;
+if uo
     So = sum(W(Lo,:), 2);
 else
     So = [];
 end
-if ui;
+if ui
     Si = sum(W(:,Li), 1).';
 else
     Si = [];
 end
-if um;
+if um
     Wm = block_density(W, M, Lm);
 else
     Wm = [];
